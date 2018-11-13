@@ -3,6 +3,7 @@ package com.company;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class Main {
 
@@ -11,7 +12,8 @@ public class Main {
         List<String> words = new ArrayList();
         //Map<K, V>
         Map<String, List<String>> trigrams = new HashMap<>();
-        SpellChecker spellChecker = new SpellChecker("<ADN>");
+        SpellChecker spellChecker = new SpellChecker("<acalmie>");
+        spellChecker.fillTrigrams("acalmie");
         String pathName = "/home/quentin/IdeaProjects/Algorithmique_TP2/src/com/company/dico.txt";
 
         int counter = 0;
@@ -36,61 +38,32 @@ public class Main {
                 }
                 */
                 spellChecker.fillTrigrams(currentWord);
+
+                /*
                 if (counter == 9)
                     break;
                 counter++;
+                */
+
             }
 
-            for (Map.Entry<String, List<String>> entry : spellChecker.getTrigrams().entrySet()) {
-                System.out.println(entry);
-            }
 
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
 
-        /********* Distance de Levenshtein *********/
-        String firstWord = " logarytmique";
-        String secondWord = " algorithmique";
-        //String firstWord = " bruhh";
-        //String secondWord = " brah";
-
-        int[][] matrice = new int[firstWord.length()][secondWord.length()];
-        matrice[0][0] = 0;
-
-        for (int i = 1; i < firstWord.length(); i++) {
-            matrice[i][0] = i;
+        /*
+        for (Map.Entry<String, List<String>> entry : spellChecker.getTrigrams().entrySet()) {
+            System.out.println(entry);
         }
-
-        for (int i = 1; i < secondWord.length(); i++) {
-            matrice[0][i] = i;
-        }
-
-        for (int i = 1; i < firstWord.length(); i++) {
-            for (int j = 1; j < secondWord.length(); j++) {
-
-                if (firstWord.charAt(i) == secondWord.charAt(j)) {
-                    //on ajoute le minimum des cases autour à la matrice[i][j]
-                    matrice[i][j] = matrice[i-1][j-1];
-                } else {
-                    //on ajoute le minimum des cases autour + 1 à la matrice[i][j]
-                    int min = Math.min(matrice[i-1][j], matrice[i][j-1]);
-                    matrice[i][j] = Math.min(min, matrice[i-1][j-1]) + 1;
-                }
-
-            }
-
-        }
-        System.out.println("Result : " + matrice[firstWord.length()-1][secondWord.length()-1]);
-        /*************************************************************************/
-
+        */
 
         /* Sélectionner les mots du dictionnaire qui ont le plus de trigrammes communs avec un mot "myWord" */
 
-        /*
+
         Map<String, Integer> commonTrigramCounter = new HashMap<String, Integer>();
-        String myWord = "<ADN>";
+        String myWord = "<" + spellChecker.getWordToCorrect() + ">";
 
         for (Map.Entry<String, List<String>> entry : trigrams.entrySet()) {
             if (entry.getValue().contains(myWord)) {
@@ -105,16 +78,56 @@ public class Main {
                 }
             }
         }
-        */
 
         spellChecker.fillCommonTrigramCounter();
 
-        for (Map.Entry<String, Integer> entry : spellChecker.getCommonTrigramCounter().entrySet()) {
-            System.out.println(entry);
+        System.out.println("SIZE : " + spellChecker.getCommonTrigramCounter().size());
+        int size = 100;
+        if (spellChecker.getCommonTrigramCounter().size() < 100) {
+            size = spellChecker.getCommonTrigramCounter().size();
         }
-
+        String[] greatestNumberCommonTrigrams = new String[size];
+        for (int i = 0; i < greatestNumberCommonTrigrams.length; i++) {
+            Map.Entry<String, Integer> maxEntry = null;
+            for (Map.Entry<String, Integer> entry : spellChecker.getCommonTrigramCounter().entrySet()) {
+                if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0) {
+                    maxEntry = entry;
+                }
+            }
+            if (maxEntry != null) {
+                spellChecker.getCommonTrigramCounter().remove(maxEntry.getKey());
+                greatestNumberCommonTrigrams[i] = maxEntry.getKey();
+            }
+        }
         /**************************************************************************************************/
 
+        ArrayList<String> nearestWords = new ArrayList<>();
+        Map<String, Integer> wordsDistances = new HashMap<>();
+        int distance = 0;
+        for (String word : greatestNumberCommonTrigrams) {
+            distance = spellChecker.levenshteinDistance(spellChecker.getWordToCorrect(), word);
+            wordsDistances.put(word, distance);
+        }
 
+        int limit = 5;
+        if (wordsDistances.size() < 5) {
+            limit = wordsDistances.size();
+        }
+        System.out.println("Nearest words : ");
+        for (int i = 0; i < 5; i++) {
+            Map.Entry<String, Integer> minEntry = null;
+            for (Map.Entry<String, Integer> entry : wordsDistances.entrySet()) {
+                if (minEntry == null || entry.getValue().compareTo(minEntry.getValue()) < 0) {
+                    minEntry = entry;
+                }
+            }
+            if (minEntry != null) {
+                wordsDistances.remove(minEntry.getKey());
+                nearestWords.add(minEntry.getKey());
+                System.out.println(minEntry.getKey());
+            }
+        }
+
+        System.out.println("TIME : " + System.nanoTime()/1000000000 + " secondes");
     }
 }
