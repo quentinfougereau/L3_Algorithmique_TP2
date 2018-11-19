@@ -8,11 +8,17 @@ import java.util.Map;
 public class SpellChecker {
 
     private String wordToCorrect;
+    private ArrayList<String> wtcTrigrams;
     private Map<String, List<String>> trigrams = new HashMap<>();
     private Map<String, Integer> commonTrigramCounter = new HashMap<String, Integer>();
-    //private ArrayList<CommonTrigramCounter> commonTrigramCounters = new ArrayList<>();
+
+    public SpellChecker() { };
 
     public SpellChecker(String word) {
+        this.wordToCorrect = word;
+    }
+
+    public void setWordToCorrect(String word) {
         this.wordToCorrect = word;
     }
 
@@ -25,13 +31,13 @@ public class SpellChecker {
             return;
         currentWord = "<" + currentWord + ">";
         for (int i = 2; i < currentWord.length(); i++) {
-            String trigram = "" + currentWord.charAt(i - 2) + currentWord.charAt(i - 1) + currentWord.charAt(i);
-            if (!trigrams.containsKey(trigram)) {
+            String currentTrigram = "" + currentWord.charAt(i - 2) + currentWord.charAt(i - 1) + currentWord.charAt(i);
+            if (!trigrams.containsKey(currentTrigram)) {
                 List<String> wordsList = new ArrayList<>();
                 wordsList.add(currentWord);
-                trigrams.put(trigram, wordsList);
+                trigrams.put(currentTrigram, wordsList);
             } else {
-                trigrams.get(trigram).add(currentWord);
+                trigrams.get(currentTrigram).add(currentWord);
             }
         }
     }
@@ -41,19 +47,31 @@ public class SpellChecker {
     }
 
     public void fillCommonTrigramCounter() {
-        for (Map.Entry<String, List<String>> entry : trigrams.entrySet()) {
-            if (entry.getValue().contains(wordToCorrect)) {
-                for(String word : entry.getValue()) {
+        for (String wtcTrigram : wtcTrigrams) {
+            if (trigrams.containsKey(wtcTrigram)) {
+                for (String word : trigrams.get(wtcTrigram)) {
                     if (commonTrigramCounter.containsKey(word)) {
                         Integer counter = commonTrigramCounter.get(word);
                         counter++;
                         commonTrigramCounter.put(word, counter);
-                    } else if (!word.equals(wordToCorrect)) {
+                    } else {
                         commonTrigramCounter.put(word, 1);
                     }
-
                 }
             }
+        }
+    }
+
+    public void clearCommonTrigramCounter() {
+        commonTrigramCounter.clear();
+    }
+
+    public void fillWtcTrigrams() {
+        wtcTrigrams = new ArrayList<>();
+        for (int i = 2; i < wordToCorrect.length(); i++) {
+            String currentTrigram = "" + wordToCorrect.charAt(i - 2) + wordToCorrect.charAt(i - 1) + wordToCorrect.charAt(i);
+            if (!wtcTrigrams.contains(currentTrigram))
+                wtcTrigrams.add(currentTrigram);
         }
     }
 
